@@ -92,7 +92,8 @@
                                 <h5>Parâmetros</h5>
                             </div>
                             <div class="ibox-content">
-                                <form class="form-horizontal">
+                                <form class="form-horizontal" id="formConfig">
+                                    <!-- 
                                     <div class="form-group">
                                         <label class="col-sm-2 control-label" for="count">Count</label>
                                         <div class="col-sm-8">
@@ -135,6 +136,7 @@
                                             <input type="text" class="form-control" id="username">
                                         </div>
                                     </div>
+                                    -->
                                 </form>
                             </div>
                         </div>
@@ -174,6 +176,8 @@
     <script>
         $(document).ready(function() {
             
+            var apiUrl = "http://ale.dev/api/";
+            
             // popular o combo de cells
             $(function() {
                 
@@ -183,7 +187,7 @@
                 });
 
                 $.getJSON(
-                    'http://ale.dev/api/cells',
+                    apiUrl + 'cells',
                     function(data) {
                         $.each(data, function(i,cell) {
 			   $(".cell-select").append('<option value="'+cell.id+'">'+cell.name+'</option>');
@@ -200,7 +204,7 @@
                     $('#componentTree').jstree({
                         core : {
                             data : function (node, cb) {
-                                $.ajax({ url : 'http://ale.dev/api/cell/' + selData.id + '/components'  }).done(function (data) {
+                                $.ajax({ url : apiUrl + 'cell/' + selData.id + '/components'  }).done(function (data) {
                                     var i, j, tmp;
                                     var lines = [];
                                     for (var i = 0, j = data.length; i < j; i++) {
@@ -216,14 +220,16 @@
                                                 roleParams.push ( {
                                                     'text' : rVal.name,
                                                     'id' : rVal.id,
-                                                    "icon": "fa fa-pencil-square-o "
+                                                    "icon": "fa fa-pencil-square-o ",
+                                                    "data": rVal
                                                 });
                                             });
                                             
                                             roles.push ( { 
                                                 'text' : val.name,
                                                 'id' : val.id,
-                                                'children': roleParams
+                                                'children': roleParams,
+                                                'data': val
                                             } );
                                         });
                                         
@@ -232,7 +238,8 @@
                                         $.each(data[i].hostgroups, function(key,val) {
                                             hostgroups.push ( { 
                                                 'text' : val.name,
-                                                'id' : val.id
+                                                'id' : val.id,
+                                                'data' : val
                                             } );
                                         });
                                         
@@ -240,6 +247,7 @@
                                         lines.push( { 
                                             'id' : data[i].id, 
                                             'text' : data[i].name, 
+                                            'data' : data[i],
                                             'children' : [ 
                                                 { 
                                                     'text' : 'Hostgroups',
@@ -263,6 +271,30 @@
                 });
             });
             
+            // seleção de componente
+            $("#componentTree").bind(
+                "select_node.jstree", function(evt, data){
+                    
+                    $("#formConfig").empty();
+                    
+                    $.each(data.node.data, function(key,val) {
+                        
+                        if ( val !== null && typeof val !== 'object' ) {
+                            // criar item do form 
+                            var html = '<div class="form-group">'
+                                     + '<label class="col-sm-2 control-label" for="' + key + '">' +  key + '</label>'
+                                     + '<div class="col-sm-8">'
+                                     + '<input type="text" class="form-control" value="' + val + '" id="' + key + '">'
+                                     + '</div>'
+                                     + '</div>';
+                            $( html ).appendTo("#formConfig");
+                        }
+
+                    });
+                    //selected node object: data.inst.get_json()[0];
+                    //selected node text: data.inst.get_json()[0].data
+                }
+            );
         });
         
     </script>
